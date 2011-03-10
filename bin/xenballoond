@@ -1,0 +1,327 @@
+#!/usr/bin/env python
+# 
+# Xenballoond - Xen virtual machine ballooning daemon
+# Based on original xenballoond writen by: Dan Magenheimer <dan.magenheimer@oracle.com>
+#
+
+__program__ = "xenballoond"
+__version__ = "0.9.0"
+__author__  = "David Passante" \
+              "Sebastien Aperghis-Tramoni <sebastien@aperghis.net>"
+
+import os, re, subprocess, sys, syslog, time
+from optparse import OptionParser, SUPPRESS_HELP
+
+
+# global variables
+global options, args, config, oom_safe_ratio
+global xs_exists, xs_read, xs_write, xenstore_enabled
+
+# default values
+oom_safe_ratio      = 1
+xenstore_enabled    = True
+xs_exists   = "/usr/bin/xenstore-exists"
+xs_read     = "/usr/bin/xenstore-read"
+xs_write    = "/usr/bin/xenstore-write"
+
+
+
+#
+# minmb()
+# -----
+def minmb():
+    minmem = config.getint("xenballoond", "minmem")
+
+    if minmem != 0:
+        return minmem
+
+    kb = open(config.get("xenballoond", "maxmem_file"), "r").read()
+    mb = int(kb) / 1024
+    pages = int(kb) / 4
+
+    if mb < 2000:
+        memMin = 104 + (pages >> 11)
+    else:
+        memMin = 296 + (pages >> 13)
+
+    return memMin
+
+
+#
+# selftarget()
+# ----------
+def selftarget(action="getTarget"):
+    meminfo = open("/proc/meminfo", "r").read()
+    memTot = re.search('MemTotal:[ \t]*([0-9]*)', meminfo).group(1)
+
+    if action == "getcurkb":
+        return memTot
+
+    tgtkb = int(re.search('Committed_AS:[ \t]*([0-9]*)', meminfo).group(1)) \
+        * oom_safe_ratio
+
+    if config.getboolean("xenballoond", "preserve_cache"):
+        active_cache = int(re.search('Active:[ \t]*([0-9]*)', meminfo).group(1))
+        tgtkb = tgtkb + active_cache
+        minbytes = minmb() * 1024 * 1024
+
+    tgtbytes = tgtkb * 1024
+
+    if tgtbytes < minbytes:
+        return minbytes
+    else:
+        return tgtbytes
+
+
+#
+# downhysteresis()
+# --------------
+def downhysteresis():
+    if xenstore_enabled:
+        if subprocess.call([xs_exists, "memory/downhysteresis"]) == 0:
+            dhs = int(subprocess.Popen([xs_read, "memory/downhysteresis"],
+                stdout=subprocess.PIPE).communicate()[0])
+            return dhs
+
+    return config.getint("xenballoond", "down_hysteresis")
+
+
+#
+# uphysteresis()
+# ------------
+def uphysteresis():
+    if xenstore_enabled:
+        if subprocess.call([xs_exists, "memory/uphysteresis"]) == 0:
+            uhs = int(subprocess.Popen([xs_read, "memory/uphysteresis"],
+                stdout=subprocess.PIPE).communicate()[0])
+            return uhs
+
+    return config.getint("xenballoond", "up_hysteresis")
+
+
+#
+# selfballoon()
+# -----------
+def selfballoon():
+    if xenstore_enabled:
+        if subprocess.call([xs_exists, "memory/selfballoon"]) == 0:
+            if int(subprocess.Popen([xs_read, "memory/selfballoon"],
+                stdout=subprocess.PIPE).communicate()[0]) == 1:
+                return True
+
+    return config.getboolean("xenballoond", "selfballoon_enabled")
+
+
+#
+# balloon_to_target()
+# -----------------
+def balloon_to_target(target=None):
+    if not target:
+        tgtbytes = selftarget()
+    else:
+        tgtbytes = target * 1024
+
+    curbytes = int(selftarget("getcurkb")) * 1024
+
+    if curbytes > tgtbytes:
+        downhys = downhysteresis()
+        if downhys != 0:
+            tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
+    elif curbytes < tgtbytes:
+        uphys = uphysteresis()
+        tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
+
+    open("/proc/xen/balloon", "w").write(str(tgtbytes))
+
+    if xenstore_enabled:
+        subprocess.call([xs_write, "memory/selftarget", str(int(tgtbytes)/1024)])
+
+
+#
+# send_memory_stats()
+# -----------------
+def send_memory_stats():
+    if not xenstore_enabled:
+        return
+
+    if config.getboolean("xenballoond", "send_meminfo"):
+        memI = {}
+        meminfo = open("/proc/meminfo", "r")
+
+        for line in meminfo.readlines():
+            val = re.match('([\w()]*):[ \t]*([0-9]*).*', line)
+            memI[val.group(1)] = val.group(2)
+
+        meminfo.close()
+        subprocess.call([xs_write, "memory/meminfo", str(memI)])
+
+    if config.getboolean("xenballoond", "send_vmstat"):
+        vmst = {}
+        vmstat = open("/proc/vmstat", "r")
+
+        for line in vmstat.readlines():
+            val = re.match('([\w()]*)[ \t]*([0-9]*).*', line)
+            vmst[val.group(1)] = val.group(2)
+
+        vmstat.close()
+        subprocess.call([xs_write, "memory/vmstat", str(vmst)])
+
+    if config.getboolean("xenballoond", "send_uptime"):
+        uptime = open("/proc/uptime", "r").read()
+        subprocess.call([xs_write, "memory/uptime", str(uptime)])
+
+
+#
+# send_cpu_stats()
+# --------------
+def send_cpu_stats():
+    if config.getboolean("xenballoond", "send_cpustat"):
+        param_lst = [ 'loadavg', 'loadavg5', 'loadavg10', 'run_proc',
+                      'lastps', 'cpu', 'cpu_us', 'cpu_ni', 'cpu_sy',
+                      'cpu_idle', 'cpu_wa', 'c1', 'c2', 'c3', 'c4' ]
+        cpustat = {}
+        lavg = open("/proc/loadavg", "r").readline()
+        cpust = open("/proc/stat", "r").readline()
+        full_stat = lavg.split() + cpust.split()
+
+        for n in range(0, len(full_stat)):
+            cpustat[param_lst[n]] = full_stat[n]
+
+        if subprocess.call([xs_exists, "cpu_stats"]) == 0:
+            subprocess.call([xs_write, "cpu_stats", str(cpustat)])
+
+#
+# parse_options()
+# -------------
+def parse_options():
+    parser = OptionParser()
+
+    parser.add_option("-V", "--version",
+        dest="version", action="store_true",
+        help="Show the program name and version and exit.")
+
+    parser.add_option("-c", "--config",
+        dest="config", type="string", metavar="FILE",
+        default="/etc/xen/"+__program__+".conf",
+        help="Specify an alternate path of the configuration file.")
+
+    parser.add_option("-D", "--detach",
+        dest="detach", action="store_true", default=True,
+        help="Make the program act as a daemon, detaching itself "
+             "from the current terminal.")
+
+    parser.add_option("--nodetach","--no-detach",
+        dest="detach", action="store_false", help=SUPPRESS_HELP)
+
+    parser.add_option("-p", "--pidfile",
+        dest="pidfile", type="string",
+        default="/var/run/"+__program__+".pid",
+        help="Specify the path to the PID file.")
+
+    return parser.parse_args()
+
+
+#
+# become_daemon()
+# -------------
+def become_daemon():
+    def fork_detach():
+        try:
+            if os.fork() > 0: os._exit(0)
+        except OSError, err:
+            print sys.stderr, "fork failed: [%d] %s" % (err.errno, err.strerror)
+    def redirect_to_devnull(stream):
+        devnull_fd = os.open(os.devnull, os.O_RDWR)
+        os.dup2(devnull_fd, stream.fileno())
+    
+    os.umask(0)     # clear file creation mask
+    os.chdir("/")   # change working directory to /
+    fork_detach()   # first fork
+    os.setsid()     # detach and become a new session leader
+    fork_detach()   # second fork
+    redirect_to_devnull(sys.stdin)  # redirect stdin to /dev/null
+    redirect_to_devnull(sys.stdout) # redirect stdout to /dev/null
+    redirect_to_devnull(sys.stderr) # redirect stderr to /dev/null
+
+
+#
+# main()
+# ----
+def main():
+    # parse command line options
+    global options, args
+    (options, args) = parse_options()
+
+    # read configuration file
+    global config
+    config = ConfigParser.ConfigParser()
+    config.read(options.config)
+
+    # check the environment
+    if not os.path.exists("/proc/xen/balloon"):
+        os.stderr.write(__program__+": fatal: Balloon driver not installed")
+        sys.exit(1)
+
+    if not os.path.exists("/proc/meminfo"):
+        os.stderr.write(__program__+": fatal: Can't read /proc/meminfo")
+        sys.exit(1)
+
+    if os.path.exists(xs_exists) and os.path.exists(xs_read) \
+        and os.path.exists(xs_write):
+        xenstore_enabled = True
+    else:
+        xenstore_enabled = False
+        os.stderr.write(__program__+": error: Missing /usr/bin/xenstore-* " \
+            "tools, disabling directed ballooning")
+
+    try:
+        oom_safe_ratio = float(100 + config.getint("xenballoond", "minmem_reserve")) / 100
+    except NameError:
+        os.stderr.write(__program__+": error: Missing 'minmem_reserve' " \
+            "option in config file, disabling oom_safe")
+
+    # become a daemon is asked to do so
+    if options.detach:
+        become_daemon()
+
+    # store PID
+    open(options.pidfile, "w").write(str(os.getpid()))
+
+    # open syslog
+    syslog.openlog(__program__, syslog.LOG_PID|syslog.LOG_NDELAY|syslog.LOG_PERROR,
+        syslog.LOG_DAEMON)
+    syslog.syslog(syslog.LOG_INFO, "%s v%s starting" % (__program__, __version__))
+
+    # prepare cleaning handler
+    def clean_on_exit():
+        os.unlink(options.pidfile)
+        syslog.syslog(syslog.LOG_INFO, "%s v%s stopped" % (__program__, __version__))
+
+    while 1:
+        maxmem_file = config.get("xenballoond", "maxmem_file")
+        maxkb = open(maxmem_file, "r").read()
+        curkb = selftarget("getcurkb")
+
+        if curkb > maxkb:
+            open(maxmem_file, "w").write(str(curkb))
+
+        if selfballoon():
+            balloon_to_target()
+            interval = config.getint("xenballoond", "selfballoon_interval")
+        elif xenstore_enabled:
+            tgtkb = int(subprocess.Popen([xs_read, "memory/target"],
+                    stdout=subprocess.PIPE).communicate()[0])
+            balloon_to_target(tgtkb)
+            interval = config.getint("xenballoond", "default_interval")
+
+        send_memory_stats()
+        send_cpu_stats()
+        time.sleep(interval)
+
+
+#
+# entry point
+#
+if __name__ == "__main__":
+    main()
+
