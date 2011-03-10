@@ -10,6 +10,7 @@ __author__  = "David Passante" \
               "Sebastien Aperghis-Tramoni <sebastien@aperghis.net>"
 
 import os, re, subprocess, sys, syslog, time
+import ConfigParser
 from optparse import OptionParser, SUPPRESS_HELP
 
 
@@ -63,8 +64,8 @@ def selftarget(action="getTarget"):
     if config.getboolean("xenballoond", "preserve_cache"):
         active_cache = int(re.search('Active:[ \t]*([0-9]*)', meminfo).group(1))
         tgtkb = tgtkb + active_cache
-        minbytes = minmb() * 1024 * 1024
 
+    minbytes = minmb() * 1024 * 1024
     tgtbytes = tgtkb * 1024
 
     if tgtbytes < minbytes:
