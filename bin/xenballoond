@@ -252,6 +252,10 @@ def main():
     global options, args
     (options, args) = parse_options()
 
+    if options.version:
+        print "%s v%s" % (__program__, __version__)
+        return
+
     # read configuration file
     global config
     config = ConfigParser.ConfigParser()
