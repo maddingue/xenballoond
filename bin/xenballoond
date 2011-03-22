@@ -259,11 +259,11 @@ def main():
 
     # check the environment
     if not os.path.exists("/proc/xen/balloon"):
-        os.stderr.write(__program__+": fatal: Balloon driver not installed")
+        sys.stderr.write(__program__+": fatal: Balloon driver not installed\n")
         sys.exit(1)
 
     if not os.path.exists("/proc/meminfo"):
-        os.stderr.write(__program__+": fatal: Can't read /proc/meminfo")
+        sys.stderr.write(__program__+": fatal: Can't read /proc/meminfo\n")
         sys.exit(1)
 
     if os.path.exists(xs_exists) and os.path.exists(xs_read) \
@@ -271,14 +271,14 @@ def main():
         xenstore_enabled = True
     else:
         xenstore_enabled = False
-        os.stderr.write(__program__+": error: Missing /usr/bin/xenstore-* " \
-            "tools, disabling directed ballooning")
+        sys.stderr.write(__program__+": error: Missing /usr/bin/xenstore-* " \
+            "tools, disabling directed ballooning\n")
 
     try:
         oom_safe_ratio = float(100 + config.getint("xenballoond", "minmem_reserve")) / 100
     except NameError:
-        os.stderr.write(__program__+": error: Missing 'minmem_reserve' " \
-            "option in config file, disabling oom_safe")
+        sys.stderr.write(__program__+": error: Missing 'minmem_reserve' " \
+            "option in config file, disabling oom_safe\n")
 
     # become a daemon is asked to do so
     if options.detach:
