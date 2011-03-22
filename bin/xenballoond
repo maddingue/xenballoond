@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-
+"""
+Xen virtual machine ballooning daemon
+"""
 __program__ = "xenballoond"
 __version__ = "0.9.0"
 __author__  = "Nicolas Agius, Sebastien Aperghis-Tramoni, David Passante"
-
-"""
-Xenballoond - Xen virtual machine ballooning daemon
-"""
 
 import os, re, subprocess, sys, syslog, time
 import ConfigParser
