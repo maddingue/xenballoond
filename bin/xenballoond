@@ -173,7 +173,7 @@ def main():
     atexit.register(clean_on_exit)
 
     # register signal handler
-    def sighander(signum, frame):
+    def sighandler(signum, frame):
         clean_on_exit()
 
     signal.signal(signal.SIGINT, sighandler)
