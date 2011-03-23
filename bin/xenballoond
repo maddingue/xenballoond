@@ -174,7 +174,7 @@ def main():
 
     # register signal handler
     def sighandler(signum, frame):
-        clean_on_exit()
+        sys.exit(0)
 
     signal.signal(signal.SIGINT, sighandler)
 
