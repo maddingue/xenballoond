@@ -148,10 +148,10 @@ def main():
     config.read(options.config)
 
     # instanciate the backend objet
-    xenballoon = Xenballoon(config)
+    backend = xenballoon.Xenballoon(config)
 
     # early checks and initialisations
-    xenballoon.init()
+    backend.init()
 
     # become a daemon is asked to do so
     if options.detach:
@@ -173,7 +173,7 @@ def main():
     atexit.register(clean_on_exit)
 
     # enter main loop
-    xenballoon.run()
+    backend.run()
 
 
 #
