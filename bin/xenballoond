@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Xen virtual machine ballooning daemon """
 
-import atexit, os, sys, syslog
+import atexit, os, signal, sys, syslog
 import ConfigParser
 from   optparse import OptionParser, SUPPRESS_HELP
 import xenballoon
@@ -171,6 +171,12 @@ def main():
         syslog.syslog(syslog.LOG_INFO, "%s v%s stopped" % me)
 
     atexit.register(clean_on_exit)
+
+    # register signal handler
+    def sighander(signum, frame):
+        clean_on_exit()
+
+    signal.signal(signal.SIGINT, sighandler)
 
     # enter main loop
     backend.run()
