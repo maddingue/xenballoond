@@ -1,16 +1,18 @@
-import imp, sys, unittest
+import sys, unittest
 
-files = ["bin/xenballoond"]
+sys.path += "lib"
+modules=["xenballoond.xenballoon"]
 
 class CheckLoad(unittest.TestCase):
-	def test_load(self):
-		for path in files:
-			try:
-				compile(open(path).read(), path, 'exec')
-				self.assertTrue(1, "compiling %s" % path)
-			except:
-				self.assertTrue(0, "compiling %s" % path)
+    def test_load(self):
+        for module in modules:
+            try:
+                __import__(module)
+                self.assertTrue(1, "loading %s" % module)
+            except:
+                self.assertTrue(0, "loading %s" % module)
 
 
-if __name__ == '__main__':
-	unittest.main()
+if __name__ == "__main__":
+    unittest.main()
+
