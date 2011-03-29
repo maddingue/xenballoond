@@ -4,11 +4,6 @@
 import os, re, subprocess, sys, syslog, time
 
 
-# meta-information
-__version__ = "0.9.0"
-__author__  = "Nicolas Agius, Sebastien Aperghis-Tramoni, David Passante"
-
-
 class Xenballoon:
     oom_safe_ratio      = 1
     xenstore_enabled    = True
