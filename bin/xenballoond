@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Xen virtual machine ballooning daemon """
 
-import xenballoon.cmdline
+import xenballoond.cmdline
 
-xenballoon.cmdline.run()
+xenballoond.cmdline.run()
 
