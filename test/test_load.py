@@ -1,7 +1,11 @@
 import sys, unittest
 
-sys.path += "lib"
-modules=["xenballoond.xenballoon"]
+sys.path += ["lib"]
+modules=[
+    "xenballoond.cmdline",
+    "xenballoond.meta",
+    "xenballoond.xenballoon",
+]
 
 class CheckLoad(unittest.TestCase):
     def test_load(self):
