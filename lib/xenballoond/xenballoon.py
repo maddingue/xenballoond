@@ -2,6 +2,7 @@
 """ Xen virtual machine ballooning backend module """
 
 import os, re, subprocess, sys, syslog, time
+import meta
 
 
 class Xenballoon:
@@ -193,11 +194,11 @@ class Xenballoon:
     def init(self):
         # check the environment
         if not os.path.exists("/proc/xen/balloon"):
-            sys.stderr.write(__program__+": fatal: Balloon driver not installed\n")
+            sys.stderr.write(meta.name+": fatal: Balloon driver not installed\n")
             sys.exit(1)
 
         if not os.path.exists("/proc/meminfo"):
-            sys.stderr.write(__program__+": fatal: Can't read /proc/meminfo\n")
+            sys.stderr.write(meta.name+": fatal: Can't read /proc/meminfo\n")
             sys.exit(1)
 
         if os.path.exists(self.xs_exists) and os.path.exists(self.xs_read) \
@@ -205,7 +206,7 @@ class Xenballoon:
             self.xenstore_enabled = True
         else:
             self.xenstore_enabled = False
-            sys.stderr.write(__program__+": error: Missing /usr/bin/xenstore-* " \
+            sys.stderr.write(meta.name+": error: Missing /usr/bin/xenstore-* " \
                 "tools, disabling directed ballooning\n")
 
         # calculate the OOM safe ratio
@@ -213,7 +214,7 @@ class Xenballoon:
             minmem_reserve = self.config.getint("xenballoond", "minmem_reserve")
             self.oom_safe_ratio = float(100 + minmem_reserve) / 100
         except NameError:
-            sys.stderr.write(__program__+": error: Missing 'minmem_reserve' " \
+            sys.stderr.write(meta.name+": error: Missing 'minmem_reserve' " \
                 "option in config file, disabling oom_safe\n")
 
 
