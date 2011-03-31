@@ -15,9 +15,19 @@ class Xenballoon:
     mode                = NORMAL_MODE
     oom_safe_ratio      = 1
     xenstore_enabled    = True
+
+    # path to xenstore commands
     xs_exists           = "/usr/bin/xenstore-exists"
     xs_read             = "/usr/bin/xenstore-read"
     xs_write            = "/usr/bin/xenstore-write"
+
+    # paths to files within procfs
+    proc_loadavg        = "/proc/loadavg"
+    proc_meminfo        = "/proc/meminfo"
+    proc_stat           = "/proc/stat"
+    proc_uptime         = "/proc/uptime"
+    proc_vmstat         = "/proc/vmstat"
+    proc_xen_balloon    = "/proc/xen/balloon"
 
 
     #
@@ -54,7 +64,7 @@ class Xenballoon:
     # selftarget()
     # ----------
     def selftarget(self, action="getTarget"):
-        meminfo = open("/proc/meminfo", "r").read()
+        meminfo = open(self.proc_meminfo, "r").read()
         memTot = re.search('MemTotal:[ \t]*([0-9]*)', meminfo).group(1)
 
         if action == "getcurkb":
@@ -134,7 +144,7 @@ class Xenballoon:
             uphys = self.uphysteresis()
             tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
 
-        open("/proc/xen/balloon", "w").write(str(tgtbytes))
+        open(self.proc_xen_balloon, "w").write(str(tgtbytes))
 
         if self.xenstore_enabled:
             subprocess.call([self.xs_write, "memory/selftarget",
@@ -150,7 +160,7 @@ class Xenballoon:
 
         if self.config.getboolean("xenballoond", "send_meminfo"):
             memI = {}
-            meminfo = open("/proc/meminfo", "r")
+            meminfo = open(self.proc_meminfo, "r")
 
             for line in meminfo.readlines():
                 val = re.match('([\w()]*):[ \t]*([0-9]*).*', line)
@@ -161,7 +171,7 @@ class Xenballoon:
 
         if self.config.getboolean("xenballoond", "send_vmstat"):
             vmst = {}
-            vmstat = open("/proc/vmstat", "r")
+            vmstat = open(self.proc_vmstat, "r")
 
             for line in vmstat.readlines():
                 val = re.match('([\w()]*)[ \t]*([0-9]*).*', line)
@@ -171,7 +181,7 @@ class Xenballoon:
             subprocess.call([self.xs_write, "memory/vmstat", str(vmst)])
 
         if self.config.getboolean("xenballoond", "send_uptime"):
-            uptime = open("/proc/uptime", "r").read()
+            uptime = open(self.proc_uptime, "r").read()
             subprocess.call([self.xs_write, "memory/uptime", str(uptime)])
 
 
@@ -184,8 +194,8 @@ class Xenballoon:
                           'lastps', 'cpu', 'cpu_us', 'cpu_ni', 'cpu_sy',
                           'cpu_idle', 'cpu_wa', 'c1', 'c2', 'c3', 'c4' ]
             cpustat = {}
-            lavg = open("/proc/loadavg", "r").readline()
-            cpust = open("/proc/stat", "r").readline()
+            lavg = open(self.proc_loadavg, "r").readline()
+            cpust = open(self.proc_stat, "r").readline()
             full_stat = lavg.split() + cpust.split()
 
             for n in range(0, len(full_stat)):
@@ -200,12 +210,12 @@ class Xenballoon:
     # ----
     def init(self):
         # check the environment
-        if not os.path.exists("/proc/xen/balloon"):
+        if not os.path.exists(self.proc_xen_balloon):
             sys.stderr.write(meta.name+": fatal: Balloon driver not installed\n")
             sys.exit(1)
 
-        if not os.path.exists("/proc/meminfo"):
-            sys.stderr.write(meta.name+": fatal: Can't read /proc/meminfo\n")
+        if not os.path.exists(self.proc_meminfo):
+            sys.stderr.write(meta.name+": fatal: Can't read "+self.proc_meminfo+"\n")
             sys.exit(1)
 
         if os.path.exists(self.xs_exists) and os.path.exists(self.xs_read) \
