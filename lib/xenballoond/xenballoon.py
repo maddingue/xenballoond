@@ -5,7 +5,14 @@ import os, re, subprocess, sys, syslog, time
 import meta
 
 
+# constants
+NORMAL_MODE     = 1
+FREEZE_MODE     = 2
+EMERGENCY_MODE  = 3
+
+
 class Xenballoon:
+    mode                = NORMAL_MODE
     oom_safe_ratio      = 1
     xenstore_enabled    = True
     xs_exists           = "/usr/bin/xenstore-exists"
@@ -222,22 +229,32 @@ class Xenballoon:
     # run()
     # ---
     def run(self):
+        config  = self.config
+        mode    = self.mode
+
         while True:
-            maxmem_file = self.config.get("xenballoond", "maxmem_file")
+            maxmem_file = config.get("xenballoond", "maxmem_file")
             maxkb = open(maxmem_file, "r").read()
             curkb = self.selftarget("getcurkb")
 
             if curkb > maxkb:
                 open(maxmem_file, "w").write(str(curkb))
 
-            if self.selfballoon():
-                self.balloon_to_target()
-                interval = self.config.getint("xenballoond", "selfballoon_interval")
-            elif self.xenstore_enabled:
-                tgtkb = int(subprocess.Popen([self.xs_read, "memory/target"],
-                        stdout=subprocess.PIPE).communicate()[0])
-                self.balloon_to_target(tgtkb)
-                interval = self.config.getint("xenballoond", "default_interval")
+            if mode == NORMAL_MODE:
+                if self.selfballoon():
+                    self.balloon_to_target()
+                    interval = config.getint("xenballoond", "selfballoon_interval")
+                elif self.xenstore_enabled:
+                    tgtkb = int(subprocess.Popen([self.xs_read, "memory/target"],
+                            stdout=subprocess.PIPE).communicate()[0])
+                    self.balloon_to_target(tgtkb)
+                    interval = config.getint("xenballoond", "default_interval")
+
+            elif mode == EMERGENCY_MODE:
+                pass
+
+            else: # FREEZE_MODE
+                pass
 
             self.send_memory_stats()
             self.send_cpu_stats()
