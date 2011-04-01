@@ -246,11 +246,11 @@ class Xenballoon:
         mode    = self.mode
 
         while True:
+            self.fetch_memory_stats()
+
             maxmem_file = config.get("xenballoond", "maxmem_file")
             maxkb = open(maxmem_file, "r").read()
             curkb = self.selftarget("getcurkb")
-
-            self.fetch_memory_stats()
 
             if curkb > maxkb:
                 open(maxmem_file, "w").write(str(curkb))
