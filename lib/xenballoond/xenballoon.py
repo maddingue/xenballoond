@@ -15,6 +15,8 @@ class Xenballoon:
     mode                = NORMAL_MODE
     oom_safe_ratio      = 1
     xenstore_enabled    = True
+    meminfo             = {}
+    vmstat              = {}
 
     # path to xenstore commands
     xs_exists           = "/usr/bin/xenstore-exists"
@@ -64,11 +66,8 @@ class Xenballoon:
     # selftarget()
     # ----------
     def selftarget(self, action="getTarget"):
-        meminfo = open(self.proc_meminfo, "r").read()
-        memTot = re.search('MemTotal:[ \t]*([0-9]*)', meminfo).group(1)
-
         if action == "getcurkb":
-            return memTot
+            return self.meminfo["MemTotal"]
 
         tgtkb = int(re.search('Committed_AS:[ \t]*([0-9]*)', meminfo).group(1)) \
             * self.oom_safe_ratio
@@ -152,6 +151,26 @@ class Xenballoon:
 
 
     #
+    # fetch_memory_stats()
+    # ------------------
+    def fetch_memory_stats(self):
+        input = open(self.proc_meminfo, "r")
+
+        for line in input.readlines():
+            val = re.match('([\w()]+):[ \t]*([0-9]+).*', line)
+            self.meminfo[val.group(1)] = int(val.group(2))
+
+        input.close()
+        input = open(self.proc_vmstat, "r")
+
+        for line in input.readlines():
+            val = re.match('([\w()]+)[ \t]+([0-9]+).*', line)
+            self.vmstat[val.group(1)] = int(val.group(2))
+
+        input.close()
+
+
+    #
     # send_memory_stats()
     # -----------------
     def send_memory_stats(self):
@@ -159,26 +178,10 @@ class Xenballoon:
             return
 
         if self.config.getboolean("xenballoond", "send_meminfo"):
-            memI = {}
-            meminfo = open(self.proc_meminfo, "r")
-
-            for line in meminfo.readlines():
-                val = re.match('([\w()]*):[ \t]*([0-9]*).*', line)
-                memI[val.group(1)] = val.group(2)
-
-            meminfo.close()
-            subprocess.call([self.xs_write, "memory/meminfo", str(memI)])
+            subprocess.call([self.xs_write, "memory/meminfo", str(self.meminfo)])
 
         if self.config.getboolean("xenballoond", "send_vmstat"):
-            vmst = {}
-            vmstat = open(self.proc_vmstat, "r")
-
-            for line in vmstat.readlines():
-                val = re.match('([\w()]*)[ \t]*([0-9]*).*', line)
-                vmst[val.group(1)] = val.group(2)
-
-            vmstat.close()
-            subprocess.call([self.xs_write, "memory/vmstat", str(vmst)])
+            subprocess.call([self.xs_write, "memory/vmstat", str(self.vmstat)])
 
         if self.config.getboolean("xenballoond", "send_uptime"):
             uptime = open(self.proc_uptime, "r").read()
@@ -246,6 +249,8 @@ class Xenballoon:
             maxmem_file = config.get("xenballoond", "maxmem_file")
             maxkb = open(maxmem_file, "r").read()
             curkb = self.selftarget("getcurkb")
+
+            self.fetch_memory_stats()
 
             if curkb > maxkb:
                 open(maxmem_file, "w").write(str(curkb))
