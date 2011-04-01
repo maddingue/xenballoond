@@ -69,12 +69,10 @@ class Xenballoon:
         if action == "getcurkb":
             return self.meminfo["MemTotal"]
 
-        tgtkb = int(re.search('Committed_AS:[ \t]*([0-9]*)', meminfo).group(1)) \
-            * self.oom_safe_ratio
+        tgtkb = self.meminfo["Committed_AS"] * self.oom_safe_ratio
 
         if self.config.getboolean("xenballoond", "preserve_cache"):
-            active_cache = int(re.search('Active:[ \t]*([0-9]*)', meminfo).group(1))
-            tgtkb = tgtkb + active_cache
+            tgtkb = tgtkb + self.meminfo["Active"]
 
         minbytes = self.minmb() * 1024 * 1024
         tgtbytes = tgtkb * 1024
