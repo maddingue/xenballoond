@@ -246,6 +246,7 @@ class Xenballoon:
     def run(self):
         config  = self.config
         mode    = self.mode
+        interval= config.getint("xenballoond", "selfballoon_interval")
 
         while True:
             self.fetch_memory_stats()
