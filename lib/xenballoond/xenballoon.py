@@ -18,6 +18,9 @@ class Xenballoon:
     meminfo             = {}
     vmstat              = {}
 
+    # path to standard commands
+    os_sync             = "/bin/sync"
+
     # path to xenstore commands
     xs_exists           = "/usr/bin/xenstore-exists"
     xs_read             = "/usr/bin/xenstore-read"
@@ -30,6 +33,7 @@ class Xenballoon:
     proc_uptime         = "/proc/uptime"
     proc_vmstat         = "/proc/vmstat"
     proc_xen_balloon    = "/proc/xen/balloon"
+    proc_drop_caches    = "/proc/sys/vm/drop_caches"
 
 
     #
@@ -264,7 +268,13 @@ class Xenballoon:
                     interval = config.getint("xenballoond", "default_interval")
 
             elif mode == EMERGENCY_MODE:
-                pass
+                # we are requested to reclaim memory
+                # 1. sync(8) data on disk
+                subprocess.call([self.os_sync])
+                # 2. free pagecache, dentries and inodes
+                open(proc_drop_caches, "w").write("3")
+                # 3. shrink down the memory
+                self.balloon_to_target()
 
             else: # FREEZE_MODE
                 pass
