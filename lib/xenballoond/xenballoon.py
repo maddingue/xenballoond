@@ -48,6 +48,8 @@ class Xenballoon:
     #
     # minmb()
     # -----
+    # @return integer
+    #
     def minmb(self):
         minmem = self.config.getint("xenballoond", "minmem")
 
@@ -69,6 +71,8 @@ class Xenballoon:
     #
     # selftarget()
     # ----------
+    # @return integer
+    #
     def selftarget(self, action="getTarget"):
         if action == "getcurkb":
             return self.meminfo["MemTotal"]
@@ -90,6 +94,8 @@ class Xenballoon:
     #
     # downhysteresis()
     # --------------
+    # @return integer rate at which target memory is ballooned out
+    #
     def downhysteresis(self):
         if self.xenstore_enabled:
             if subprocess.call([self.xs_exists, "memory/downhysteresis"]) == 0:
@@ -103,6 +109,8 @@ class Xenballoon:
     #
     # uphysteresis()
     # ------------
+    # @return integer rate at which target memory is reclaimed
+    #
     def uphysteresis(self):
         if self.xenstore_enabled:
             if subprocess.call([self.xs_exists, "memory/uphysteresis"]) == 0:
