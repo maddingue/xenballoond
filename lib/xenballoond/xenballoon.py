@@ -135,7 +135,7 @@ class Xenballoon:
         else:
             tgtbytes = target * 1024
 
-        curbytes = int(self.selftarget("getcurkb")) * 1024
+        curbytes = self.selftarget("getcurkb") * 1024
 
         if curbytes > tgtbytes:
             downhys = self.downhysteresis()
