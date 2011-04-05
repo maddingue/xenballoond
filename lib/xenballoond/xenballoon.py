@@ -156,8 +156,8 @@ class Xenballoon:
         open(self.proc_xen_balloon, "w").write(str(tgtbytes))
 
         if self.xenstore_enabled:
-            subprocess.call([self.xs_write, "memory/selftarget",
-                str(int(tgtbytes)/1024)])
+            valstr = str(tgtbytes/1024)
+            subprocess.call([self.xs_write, "memory/selftarget", valstr])
 
 
     #
