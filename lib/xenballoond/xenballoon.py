@@ -54,9 +54,9 @@ class Xenballoon:
         if minmem != 0:
             return minmem
 
-        kb = open(self.config.get("xenballoond", "maxmem_file"), "r").read()
-        mb = int(kb) / 1024
-        pages = int(kb) / 4
+        kb = int(open(self.config.get("xenballoond", "maxmem_file"), "r").read())
+        mb = kb / 1024
+        pages = kb / 4
 
         if mb < 2000:
             memMin = 104 + (pages >> 11)
