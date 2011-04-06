@@ -288,7 +288,11 @@ class Xenballoon:
             else: # FREEZE_MODE
                 pass
 
+            # fetch and send statistics to the Xen host
+            self.fetch_memory_stats()
             self.send_memory_stats()
             self.send_cpu_stats()
+
+            # sleep before next iteration
             time.sleep(interval)
 
