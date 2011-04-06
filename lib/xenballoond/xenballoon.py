@@ -260,7 +260,7 @@ class Xenballoon:
             self.fetch_memory_stats()
 
             maxmem_file = config.get("xenballoond", "maxmem_file")
-            maxkb = open(maxmem_file, "r").read()
+            maxkb = int(open(maxmem_file, "r").read())
             curkb = self.selftarget("getcurkb")
 
             if curkb > maxkb:
