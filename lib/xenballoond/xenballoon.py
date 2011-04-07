@@ -253,12 +253,13 @@ class Xenballoon:
     # ---
     def run(self):
         config  = self.config
-        mode    = self.mode
         interval= config.getint("xenballoond", "selfballoon_interval")
 
         while True:
+            # fetch memory statistics
             self.fetch_memory_stats()
 
+            # update the memory peak
             maxmem_file = config.get("xenballoond", "maxmem_file")
             maxkb = int(open(maxmem_file, "r").read())
             curkb = self.selftarget("getcurkb")
@@ -266,7 +267,13 @@ class Xenballoon:
             if curkb > maxkb:
                 open(maxmem_file, "w").write(str(curkb))
 
-            if mode == NORMAL_MODE:
+            # read the memory allocation mode
+            if subprocess.call([self.xs_exists, "memory/mode"]) == 0:
+                self.mode = int(subprocess.call([self.xs_read, "memory/mode"],
+                            stdout=subprocess.PIPE).communicate()[0])
+
+            # handle the memory according to the current mode
+            if self.mode == NORMAL_MODE:
                 if self.selfballoon():
                     self.balloon_to_target()
                     interval = config.getint("xenballoond", "selfballoon_interval")
@@ -276,7 +283,7 @@ class Xenballoon:
                     self.balloon_to_target(tgtkb)
                     interval = config.getint("xenballoond", "default_interval")
 
-            elif mode == EMERGENCY_MODE:
+            elif self.mode == EMERGENCY_MODE:
                 # we are requested to reclaim memory
                 # 1. sync(8) data on disk
                 subprocess.call([self.os_sync])
