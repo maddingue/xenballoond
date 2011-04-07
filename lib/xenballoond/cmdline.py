@@ -12,14 +12,11 @@ import meta, xenballoon
 # -------------
 ## Parse command line options
 # @return an OptionParser object
+#
 def parse_options():
     """ Parse command line options and return an OptionParser object """
 
     parser = OptionParser()
-
-    parser.add_option("-H", "--manpage",
-        dest="manpage", action="store_true",
-        help="Show the program manual page.")
 
     parser.add_option("-V", "--version",
         dest="version", action="store_true",
@@ -28,7 +25,7 @@ def parse_options():
     parser.add_option("-c", "--config",
         dest="config", type="string", metavar="FILE",
         default="/etc/xen/"+meta.name+".conf",
-        help="Specify an alternate path of the configuration file.")
+        help="Specify an alternate path to the configuration file.")
 
     parser.add_option("-D", "--detach",
         dest="detach", action="store_true", default=True,
@@ -44,47 +41,6 @@ def parse_options():
         help="Specify the path to the PID file.")
 
     return parser.parse_args()
-
-
-#
-# manpage()
-# ------
-def manpage():
-    """ Return the manual page of this program in plain text """
-    return """
-NAME
-
-    """+meta.name+" -"+meta.description+"""
-
-
-VERSION
-
-    This is the manual page of """+meta.name+" version "+meta.version+"""
-
-
-SYNOPSIS
-
-    """+meta.name+" [--config /etc/xen/"+meta.name+""".conf]
-                [--[no]detach]  [--pidfile /var/run/"""+meta.name+""".pid]
-
-    """+meta.name+""" --help
-    """+meta.name+""" --version
-
-
-DESCRIPTION
-
-    ...
-
-
-COPYRIGHT
-
-    Copyright 2010-2011 """ + meta.authors + """
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the  Free Software Foundation,  either version 2 of the License,  or
-    (at your option) any later version.
-"""
 
 
 #
@@ -131,10 +87,6 @@ def run():
 
     if options.version:
         print "%s v%s" % me
-        return
-
-    if options.manpage:
-        print manpage()
         return
 
     # read configuration file
