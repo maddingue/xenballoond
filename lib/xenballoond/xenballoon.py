@@ -188,14 +188,14 @@ class Xenballoon:
             return
 
         if self.config.getboolean("xenballoond", "send_meminfo"):
-            subprocess.call([self.xs_write, "memory/meminfo", str(self.meminfo)])
+            subprocess.call([self.xs_write, "stats/meminfo", str(self.meminfo)])
 
         if self.config.getboolean("xenballoond", "send_vmstat"):
-            subprocess.call([self.xs_write, "memory/vmstat", str(self.vmstat)])
+            subprocess.call([self.xs_write, "stats/vmstat", str(self.vmstat)])
 
         if self.config.getboolean("xenballoond", "send_uptime"):
             uptime = open(self.proc_uptime, "r").read()
-            subprocess.call([self.xs_write, "memory/uptime", str(uptime)])
+            subprocess.call([self.xs_write, "stats/uptime", str(uptime)])
 
 
     #
@@ -214,8 +214,8 @@ class Xenballoon:
             for n in range(0, len(full_stat)):
                 cpustat[param_lst[n]] = full_stat[n]
 
-            if subprocess.call([self.xs_exists, "cpu_stats"]) == 0:
-                subprocess.call([self.xs_write, "cpu_stats", str(cpustat)])
+            if subprocess.call([self.xs_exists, "stats/system"]) == 0:
+                subprocess.call([self.xs_write, "stats/system", str(cpustat)])
 
 
     #
