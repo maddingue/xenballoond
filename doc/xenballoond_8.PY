@@ -77,7 +77,7 @@ L<https://github.com/maddingue/xenballoond>
 
 =head1 XENSTORE PATHS
 
-There are the XenStore paths used by B<"""+meta.name+""">. The letter
+These are the XenStore paths used by B<"""+meta.name+""">. The letter
 after the path indicates whether the daemon reads (R) or writes (W) to
 this path.
 
@@ -85,15 +85,17 @@ this path.
 
 =item *
 
-C<memory/downhysteresis> (R)
+C<memory/downhysteresis> (R) - rate (integer) at which target memory is
+ballooned out
 
 =item *
 
-C<memory/mode> (R)
+C<memory/mode> (R) - memory allocation mode;
+available values: 1 (normal), 2 (freeze), 3 (emergency)
 
 =item *
 
-C<memory/selfballoon> (R)
+C<memory/selfballoon> (R) - enable (1) or disable (0) self-ballooning
 
 =item *
 
@@ -105,23 +107,24 @@ C<memory/target> (R)
 
 =item *
 
-C<memory/uphysteresis> (R)
+C<memory/uphysteresis> (R) - rate (integer) at which target memory is
+reclaimed
 
 =item *
 
-C<stats/meminfo> (W)
+C<stats/meminfo> (W) - parsed content from F</proc/meminfo>
 
 =item *
 
-C<stats/system> (W)
+C<stats/system> (W) - parsed content from F</proc/loadavg> and F</proc/stat>
 
 =item *
 
-C<stats/uptime> (W)
+C<stats/uptime> (W) - content of F</proc/uptime>
 
 =item *
 
-C<stats/vmstat> (W)
+C<stats/vmstat> (W) - parsed content from F</proc/vmstat>
 
 =back
 
