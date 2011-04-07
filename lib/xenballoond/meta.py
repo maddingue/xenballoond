@@ -6,6 +6,7 @@ version = "0.9.0"
 license = "GPL"
 authors = "Nicolas Agius, Sebastien Aperghis-Tramoni, David Passante"
 url     = "https://github.com/maddingue/xenballoond"
+mansect = "8"
 manbook = "Xen Tools"
 description = "Xen virtual machine ballooning daemon"
 
