@@ -288,7 +288,7 @@ class Xenballoon:
                 # 1. sync(8) data on disk
                 subprocess.call([self.os_sync])
                 # 2. free pagecache, dentries and inodes
-                open(proc_drop_caches, "w").write("3")
+                open(self.proc_drop_caches, "w").write("3")
                 # 3. shrink down the memory
                 self.balloon_to_target()
 
