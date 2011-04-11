@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Xen virtual machine ballooning backend module """
 
-import os, re, subprocess, sys, syslog, time
+import os, re, subprocess, sys, time
 import meta
 
 
