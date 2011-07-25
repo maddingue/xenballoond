@@ -269,7 +269,7 @@ class Xenballoon:
 
             # read the memory allocation mode
             if subprocess.call([self.xs_exists, "memory/mode"]) == 0:
-                self.mode = int(subprocess.call([self.xs_read, "memory/mode"],
+                self.mode = int(subprocess.Popen([self.xs_read, "memory/mode"],
                             stdout=subprocess.PIPE).communicate()[0])
 
             # handle the memory according to the current mode
