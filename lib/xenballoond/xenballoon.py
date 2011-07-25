@@ -79,7 +79,8 @@ class Xenballoon:
 
         tgtkb = self.meminfo["Committed_AS"] * self.oom_safe_ratio
 
-        if self.config.getboolean("xenballoond", "preserve_cache"):
+        if self.config.getboolean("xenballoond", "preserve_cache") \
+            and self.mode != EMERGENCY_MODE:
             tgtkb = tgtkb + self.meminfo["Active"]
 
         minbytes = self.minmb() * 1024 * 1024
@@ -145,13 +146,14 @@ class Xenballoon:
 
         curbytes = self.selftarget("getcurkb") * 1024
 
-        if curbytes > tgtbytes:
-            downhys = self.downhysteresis()
-            if downhys != 0:
-                tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
-        elif curbytes < tgtbytes:
-            uphys = self.uphysteresis()
-            tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
+        if self.mode != EMERGENCY_MODE:
+            if curbytes > tgtbytes:
+                downhys = self.downhysteresis()
+                if downhys != 0:
+                    tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
+            elif curbytes < tgtbytes:
+                uphys = self.uphysteresis()
+                tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
 
         open(self.proc_xen_balloon, "w").write(str(tgtbytes))
 
