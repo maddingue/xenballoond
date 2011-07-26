@@ -189,13 +189,16 @@ class Xenballoon:
         if not self.xenstore_enabled:
             return
 
-        if self.config.getboolean("xenballoond", "send_meminfo"):
+        if self.config.getboolean("xenballoond", "send_meminfo") \
+            and subprocess.call([self.xs_exists, "stats/meminfo"]) == 0:
             subprocess.call([self.xs_write, "stats/meminfo", str(self.meminfo)])
 
-        if self.config.getboolean("xenballoond", "send_vmstat"):
+        if self.config.getboolean("xenballoond", "send_vmstat") \
+            and subprocess.call([self.xs_exists, "stats/vmstat"]) == 0:
             subprocess.call([self.xs_write, "stats/vmstat", str(self.vmstat)])
 
-        if self.config.getboolean("xenballoond", "send_uptime"):
+        if self.config.getboolean("xenballoond", "send_uptime") \
+            and subprocess.call([self.xs_exists, "stats/uptime"]) == 0:
             uptime = open(self.proc_uptime, "r").read()
             subprocess.call([self.xs_write, "stats/uptime", str(uptime)])
 
