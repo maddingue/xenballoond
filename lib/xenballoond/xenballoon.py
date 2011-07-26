@@ -207,7 +207,8 @@ class Xenballoon:
     # send_cpu_stats()
     # --------------
     def send_cpu_stats(self):
-        if self.config.getboolean("xenballoond", "send_cpustat"):
+        if self.config.getboolean("xenballoond", "send_cpustat") \
+            and subprocess.call([self.xs_exists, "stats/system"]) == 0:
             param_lst = [ 'loadavg', 'loadavg5', 'loadavg10', 'run_proc',
                           'lastps', 'cpu', 'cpu_us', 'cpu_ni', 'cpu_sy',
                           'cpu_idle', 'cpu_wa', 'c1', 'c2', 'c3', 'c4' ]
@@ -219,8 +220,7 @@ class Xenballoon:
             for n in range(0, len(full_stat)):
                 cpustat[param_lst[n]] = full_stat[n]
 
-            if subprocess.call([self.xs_exists, "stats/system"]) == 0:
-                subprocess.call([self.xs_write, "stats/system", str(cpustat)])
+            subprocess.call([self.xs_write, "stats/system", str(cpustat)])
 
 
     #
