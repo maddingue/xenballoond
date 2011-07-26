@@ -199,7 +199,8 @@ class Xenballoon:
 
         if self.config.getboolean("xenballoond", "send_uptime") \
             and subprocess.call([self.xs_exists, "stats/uptime"]) == 0:
-            uptime = open(self.proc_uptime, "r").read()
+            uptimes = open(self.proc_uptime, "r").read().split()
+            uptime = { 'uptime': uptimes[0], 'idle': uptimes[1] }
             subprocess.call([self.xs_write, "stats/uptime", str(uptime)])
 
 
