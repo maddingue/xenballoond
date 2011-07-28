@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# Startup script for managing the Xen ballooning daemon.
+#
+
+# chkconfig header
+# ----------------
+# chkconfig:   2345 20 80
+# description: Startup script for managing the Xen ballooning daemon.
+# processname: xenballoond
+
+# LSB header
+# ----------
+### BEGIN INIT INFO
+# Provides:          xenballoond
+# Required-Start:    $syslog $remote_fs
+# Should-Start:
+# Required-Stop:     $syslog $remote_fs
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop xenballoond
+# Description:       Startup script for managing the Xen ballooning daemon.
+### END INIT INFO
+
+# source functions library
+. /lib/lsb/init-functions
+
+# local utility functions
+RETVAL=0
+fatal () { echo "fatal: $@" >&2 ; exit $RETVAL ; }
+quit  () { echo "$@" >&2 ; exit $RETVAL ; }
+warn  () { echo "$@" >&2 ; }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# program information
+NAME="Xen ballooning daemon"
+CONFIG="/etc/xen/xenballoond.conf"
+COMMAND="/usr/bin/xenballoond"
+PROCESS="xenballoond"
+PIDFILE="/var/run/xenballoond.pid"
+
+# check that we are not in domain0
+[ -f /proc/xen/capabilities ] && grep -q "control_d" /proc/xen/capabilities \
+	&& RETVAL=1 && fatal "must not be executed in domain0"
+
+# check that balloon support is present
+[ ! -f /proc/xen/balloon ] && RETVAL=1 && fatal "missing balloon driver"
+
+# check that some mandatory files are present
+if [ ! -x "$COMMAND" ]; then RETVAL=5; fatal "can't find program $COMMAND"; fi
+if [ ! -f "$CONFIG"  ]; then RETVAL=6; fatal "can't find config file $CONFIG"; fi
+
+# record allocated memory
+maxmem_file=`awk '/maxmem_file/{sub(".*= *",""); print}' "$CONFIG"`
+maxmem=`awk '/MemTotal/{print $2}' /proc/meminfo`
+if [ -f "$maxmem_file" ]; then
+	oldmaxmem=`cat "$maxmem_file"`
+	if [ $oldmaxmem -gt $maxmem ]; then
+		maxmem=$oldmaxmem
+	fi
+fi
+echo $maxmem > "$maxmem_file"
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# functions for controlling the daemon
+start () {
+	log_daemon_msg "Starting $NAME: " "$PROCESS"
+	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+		--exec "$COMMAND" \
+		-- -D  --config "$CONFIG" --pidfile $PIDFILE
+	if [ $? ]; then
+		log_end_msg $?
+		RETVAL=0
+	else
+		log_end_msg $?
+		RETVAL=1
+	fi
+}
+
+stop () {
+	log_daemon_msg "Stopping $NAME: " "$PROCESS"
+	start-stop-daemon --stop --quiet --pidfile $PIDFILE
+	if [ $? ]; then
+		log_end_msg $?
+		RETVAL=0
+	else
+		log_end_msg $?
+		RETVAL=1
+	fi
+}
+
+reload () {
+	warn "reload not implemented"
+	RETVAL=3
+#	printf "Reloading $NAME: "
+#	start-stop-daemon --signal HUP --quiet pidfile $PIDFILE \
+#		--exec "$COMMAND"
+#	echo "$PROCESS."
+}
+
+status () {
+	echo "=== Process Status ========================================="
+	status_of_proc "$PROCESS" "$PROCESS"
+	echo
+	ps auxww | head -1
+	ps auxww | awk '!/awk|grep|ssh|sh/ && /'$PROCESS'/'
+	echo
+	echo "=== Last messages from the logs ============================"
+	fgrep -h $PROCESS /var/log/daemon.log /var/log/daemons/info 2>/dev/null | tail
+}
+
+# see how we were called
+case "$1" in
+  start)   start ;;
+  stop)    stop  ;;
+  restart) stop ; sleep 1 ; start ;;
+  reload)  reload ;;
+  status)  status ;;
+  *)       echo "usage: `basename $0` {start|stop|restart|reload|status}" >&2
+esac
+
+exit $RETVAL
