@@ -10,8 +10,8 @@ etc/init.d/xenballoond.debian
 etc/init.d/xenballoond.redhat
 lib/__init__.py
 lib/xenballoond
-lib/xenballoond/cmdline.py
 lib/xenballoond/__init__.py
+lib/xenballoond/cmdline.py
 lib/xenballoond/meta.py
 lib/xenballoond/xenballoon.py
 test/test_load.py
