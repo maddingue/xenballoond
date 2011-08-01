@@ -2,9 +2,14 @@
 import sys
 sys.path += ["lib"]
 
+import subprocess
 from distutils.command.build import build
 from distutils.core import setup
 from xenballoond import meta
+
+
+print "generating manual page"
+subprocess.call(["doc/xenballoond_8.PY"])
 
 setup(
     name=meta.name,
