@@ -3,7 +3,6 @@ setup.py
 README.rst
 Changes
 bin/xenballoond
-doc/xenballoond.8
 doc/xenballoond_8.PY
 etc/config/xenballoond.conf
 etc/init.d/xenballoond.debian
