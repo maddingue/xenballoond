@@ -1,6 +1,7 @@
 MANIFEST
 setup.py
 README.rst
+Changes
 bin/xenballoond
 doc/xenballoond.8
 doc/xenballoond_8.PY

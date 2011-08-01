@@ -1,0 +1,16 @@
+Release history for xenballoond
+
+1.0.0 - 2011.08.01
+ - [BUGFIX] Fixed a few bugs (nagius).
+ - [FEATURE] Make the emergency mode more aggressive (nagius).
+ - [FEATURE] Improved the cpu and uptime stats (nagius).
+ - [DOC] Document all configuration parameters in the manual page (maddingue).
+ - [DIST] Added init(8) script for Debian- and Red Hat-based distributions (maddingue).
+ - [DIST] Added MANIFEST and Changes (maddingue).
+
+0.9.0 - 2011.04.07
+ - [CODE] Refactored the whole program (maddingue).
+ - [CODE] The configuration file is now a pure static .INI file (maddingue).
+ - [DOC] Added semi-generated manual page (maddingue).
+ - [DIST] Shaping the whole thing in a standard Python distribution (maddingue).
+
