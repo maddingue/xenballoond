@@ -79,7 +79,8 @@ class Xenballoon:
 
         tgtkb = self.meminfo["Committed_AS"] * self.oom_safe_ratio
 
-        if self.config.getboolean("xenballoond", "preserve_cache"):
+        if self.config.getboolean("xenballoond", "preserve_cache") \
+            and self.mode != EMERGENCY_MODE:
             tgtkb = tgtkb + self.meminfo["Active"]
 
         minbytes = self.minmb() * 1024 * 1024
@@ -145,13 +146,14 @@ class Xenballoon:
 
         curbytes = self.selftarget("getcurkb") * 1024
 
-        if curbytes > tgtbytes:
-            downhys = self.downhysteresis()
-            if downhys != 0:
-                tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
-        elif curbytes < tgtbytes:
-            uphys = self.uphysteresis()
-            tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
+        if self.mode != EMERGENCY_MODE:
+            if curbytes > tgtbytes:
+                downhys = self.downhysteresis()
+                if downhys != 0:
+                    tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
+            elif curbytes < tgtbytes:
+                uphys = self.uphysteresis()
+                tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
 
         open(self.proc_xen_balloon, "w").write(str(tgtbytes))
 
@@ -187,14 +189,18 @@ class Xenballoon:
         if not self.xenstore_enabled:
             return
 
-        if self.config.getboolean("xenballoond", "send_meminfo"):
+        if self.config.getboolean("xenballoond", "send_meminfo") \
+            and subprocess.call([self.xs_exists, "stats/meminfo"]) == 0:
             subprocess.call([self.xs_write, "stats/meminfo", str(self.meminfo)])
 
-        if self.config.getboolean("xenballoond", "send_vmstat"):
+        if self.config.getboolean("xenballoond", "send_vmstat") \
+            and subprocess.call([self.xs_exists, "stats/vmstat"]) == 0:
             subprocess.call([self.xs_write, "stats/vmstat", str(self.vmstat)])
 
-        if self.config.getboolean("xenballoond", "send_uptime"):
-            uptime = open(self.proc_uptime, "r").read()
+        if self.config.getboolean("xenballoond", "send_uptime") \
+            and subprocess.call([self.xs_exists, "stats/uptime"]) == 0:
+            uptimes = open(self.proc_uptime, "r").read().split()
+            uptime = { 'uptime': uptimes[0], 'idle': uptimes[1] }
             subprocess.call([self.xs_write, "stats/uptime", str(uptime)])
 
 
@@ -202,7 +208,8 @@ class Xenballoon:
     # send_cpu_stats()
     # --------------
     def send_cpu_stats(self):
-        if self.config.getboolean("xenballoond", "send_cpustat"):
+        if self.config.getboolean("xenballoond", "send_cpustat") \
+            and subprocess.call([self.xs_exists, "stats/system"]) == 0:
             param_lst = [ 'loadavg', 'loadavg5', 'loadavg10', 'run_proc',
                           'lastps', 'cpu', 'cpu_us', 'cpu_ni', 'cpu_sy',
                           'cpu_idle', 'cpu_wa', 'c1', 'c2', 'c3', 'c4' ]
@@ -214,8 +221,7 @@ class Xenballoon:
             for n in range(0, len(full_stat)):
                 cpustat[param_lst[n]] = full_stat[n]
 
-            if subprocess.call([self.xs_exists, "stats/system"]) == 0:
-                subprocess.call([self.xs_write, "stats/system", str(cpustat)])
+            subprocess.call([self.xs_write, "stats/system", str(cpustat)])
 
 
     #
@@ -269,7 +275,7 @@ class Xenballoon:
 
             # read the memory allocation mode
             if subprocess.call([self.xs_exists, "memory/mode"]) == 0:
-                self.mode = int(subprocess.call([self.xs_read, "memory/mode"],
+                self.mode = int(subprocess.Popen([self.xs_read, "memory/mode"],
                             stdout=subprocess.PIPE).communicate()[0])
 
             # handle the memory according to the current mode

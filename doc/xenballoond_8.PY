@@ -3,7 +3,7 @@ import os.path, subprocess, sys
 sys.path += ["lib", "../lib"]
 from xenballoond import meta
 
-default_config  = "/etc/xen/"+meta.name+".conf"
+default_config  = "/etc/"+meta.name+".conf"
 default_pidfile = "/var/run/"+meta.name+".pid"
 
 input = """

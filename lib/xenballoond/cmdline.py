@@ -24,7 +24,7 @@ def parse_options():
 
     parser.add_option("-c", "--config",
         dest="config", type="string", metavar="FILE",
-        default="/etc/xen/"+meta.name+".conf",
+        default="/etc/"+meta.name+".conf",
         help="Specify an alternate path to the configuration file.")
 
     parser.add_option("-D", "--detach",
