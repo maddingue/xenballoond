@@ -101,17 +101,6 @@ reload () {
 #	echo "$PROCESS."
 }
 
-status () {
-	echo "=== Process Status ========================================="
-	status "$PROCESS"
-	echo
-	ps auxww | head -1
-	ps auxww | awk '!/awk|grep|ssh|sh/ && /'$PROCESS'/'
-	echo
-	echo "=== Last messages from the logs ============================"
-	grep -h $PROCESS /var/log/daemon.log /var/log/daemons/info 2>/dev/null | tail
-}
-
 # see how we were called
 case "$1" in
   start)   start ;;
@@ -129,7 +118,11 @@ case "$1" in
     ;;
 
   reload)  reload ;;
-  status)  status ;;
+  status)
+	status -p $PIDFILE $PROCESS
+    RETVAL=$?
+    ;;
+
   *)       echo "usage: `basename $0` {start|stop|restart|reload|status}" >&2
 esac
 
