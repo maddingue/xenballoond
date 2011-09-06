@@ -4,7 +4,7 @@ README.rst
 Changes
 bin/xenballoond
 doc/xenballoond_8.PY
-etc/config/xenballoond.conf
+etc/xenballoond.conf
 etc/init.d/xenballoond.debian
 etc/init.d/xenballoond.redhat
 lib/__init__.py

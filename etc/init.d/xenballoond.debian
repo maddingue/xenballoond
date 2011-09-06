@@ -36,7 +36,7 @@ warn  () { echo "$@" >&2 ; }
 
 # program information
 NAME="Xen ballooning daemon"
-CONFIG="/etc/xen/xenballoond.conf"
+CONFIG="/etc/xenballoond.conf"
 COMMAND="/usr/bin/xenballoond"
 PROCESS="xenballoond"
 PIDFILE="/var/run/xenballoond.pid"
