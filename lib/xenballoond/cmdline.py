@@ -89,6 +89,11 @@ def run():
         print "%s v%s" % me
         return
 
+    # check that we are root
+    if os.getuid() != 0:
+        sys.stderr.write("")
+        sys.exit(1)
+
     # read configuration file
     config = ConfigParser.ConfigParser()
     config.read(options.config)
