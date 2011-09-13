@@ -91,7 +91,7 @@ def run():
 
     # check that we are root
     if os.getuid() != 0:
-        sys.stderr.write("")
+        sys.stderr.write("program must be run as root")
         sys.exit(1)
 
     # read configuration file
