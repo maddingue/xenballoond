@@ -99,7 +99,7 @@ def run():
     # early checks and initialisations
     backend.init()
 
-    # become a daemon is asked to do so
+    # become a daemon if asked to do so
     if options.detach:
         become_daemon()
 
