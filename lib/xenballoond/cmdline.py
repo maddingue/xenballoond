@@ -59,6 +59,7 @@ def become_daemon():
             if os.fork() > 0: os._exit(0)
         except OSError, err:
             sys.stderr.write("fork failed: [%d] %s\n" % (err.errno, err.strerror))
+            sys.exit(1)
 
     def redirect_to_devnull(stream):
         devnull_fd = os.open(os.devnull, os.O_RDWR)
