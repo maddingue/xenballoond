@@ -1,5 +1,8 @@
 Release history for xenballoond
 
+ - [OPTIM] Removed all calls to xenstore-exists(8) to avoid a few useless
+   forks and improve performances (maddingue).
+
 1.0.0 - 2011.08.01
  - [BUGFIX] Fixed a few bugs (nagius).
  - [FEATURE] Make the emergency mode more aggressive (nagius).

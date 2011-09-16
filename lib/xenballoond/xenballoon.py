@@ -22,7 +22,6 @@ class Xenballoon:
     os_sync             = "/bin/sync"
 
     # path to xenstore commands
-    xs_exists           = "/usr/bin/xenstore-exists"
     xs_read             = "/usr/bin/xenstore-read"
     xs_write            = "/usr/bin/xenstore-write"
 
@@ -99,10 +98,12 @@ class Xenballoon:
     #
     def downhysteresis(self):
         if self.xenstore_enabled:
-            if subprocess.call([self.xs_exists, "memory/downhysteresis"]) == 0:
-                dhs = int(subprocess.Popen([self.xs_read, "memory/downhysteresis"],
-                    stdout=subprocess.PIPE).communicate()[0])
-                return dhs
+            cmd  = [self.xs_read, "memory/downhysteresis"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0:
+                return int(out)
 
         return self.config.getint("xenballoond", "down_hysteresis")
 
@@ -114,10 +115,12 @@ class Xenballoon:
     #
     def uphysteresis(self):
         if self.xenstore_enabled:
-            if subprocess.call([self.xs_exists, "memory/uphysteresis"]) == 0:
-                uhs = int(subprocess.Popen([self.xs_read, "memory/uphysteresis"],
-                    stdout=subprocess.PIPE).communicate()[0])
-                return uhs
+            cmd  = [self.xs_read, "memory/uphysteresis"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0:
+                return int(out)
 
         return self.config.getint("xenballoond", "up_hysteresis")
 
@@ -127,10 +130,12 @@ class Xenballoon:
     # -----------
     def selfballoon(self):
         if self.xenstore_enabled:
-            if subprocess.call([self.xs_exists, "memory/selfballoon"]) == 0:
-                if int(subprocess.Popen([self.xs_read, "memory/selfballoon"],
-                    stdout=subprocess.PIPE).communicate()[0]) == 1:
-                    return True
+            cmd  = [self.xs_read, "memory/selfballoon"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0 and int(out) == 1:
+                return True
 
         return self.config.getboolean("xenballoond", "selfballoon_enabled")
 
@@ -189,16 +194,13 @@ class Xenballoon:
         if not self.xenstore_enabled:
             return
 
-        if self.config.getboolean("xenballoond", "send_meminfo") \
-            and subprocess.call([self.xs_exists, "stats/meminfo"]) == 0:
+        if self.config.getboolean("xenballoond", "send_meminfo"):
             subprocess.call([self.xs_write, "stats/meminfo", str(self.meminfo)])
 
-        if self.config.getboolean("xenballoond", "send_vmstat") \
-            and subprocess.call([self.xs_exists, "stats/vmstat"]) == 0:
+        if self.config.getboolean("xenballoond", "send_vmstat"):
             subprocess.call([self.xs_write, "stats/vmstat", str(self.vmstat)])
 
-        if self.config.getboolean("xenballoond", "send_uptime") \
-            and subprocess.call([self.xs_exists, "stats/uptime"]) == 0:
+        if self.config.getboolean("xenballoond", "send_uptime"):
             uptimes = open(self.proc_uptime, "r").read().split()
             uptime = { 'uptime': uptimes[0], 'idle': uptimes[1] }
             subprocess.call([self.xs_write, "stats/uptime", str(uptime)])
@@ -208,8 +210,7 @@ class Xenballoon:
     # send_cpu_stats()
     # --------------
     def send_cpu_stats(self):
-        if self.config.getboolean("xenballoond", "send_cpustat") \
-            and subprocess.call([self.xs_exists, "stats/system"]) == 0:
+        if self.config.getboolean("xenballoond", "send_cpustat"):
             param_lst = [ 'loadavg', 'loadavg5', 'loadavg10', 'run_proc',
                           'lastps', 'cpu', 'cpu_us', 'cpu_ni', 'cpu_sy',
                           'cpu_idle', 'cpu_wa', 'c1', 'c2', 'c3', 'c4' ]
@@ -237,8 +238,7 @@ class Xenballoon:
             sys.stderr.write(meta.name+": fatal: Can't read "+self.proc_meminfo+"\n")
             sys.exit(1)
 
-        if os.path.exists(self.xs_exists) and os.path.exists(self.xs_read) \
-            and os.path.exists(self.xs_write):
+        if os.path.exists(self.xs_read) and os.path.exists(self.xs_write):
             self.xenstore_enabled = True
         else:
             self.xenstore_enabled = False
@@ -274,9 +274,12 @@ class Xenballoon:
                 open(maxmem_file, "w").write(str(curkb))
 
             # read the memory allocation mode
-            if subprocess.call([self.xs_exists, "memory/mode"]) == 0:
-                self.mode = int(subprocess.Popen([self.xs_read, "memory/mode"],
-                            stdout=subprocess.PIPE).communicate()[0])
+            cmd  = [self.xs_read, "memory/mode"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0:
+                self.mode = int(out)
 
             # handle the memory according to the current mode
             if self.mode == NORMAL_MODE:
