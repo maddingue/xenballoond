@@ -90,6 +90,11 @@ ballooned out
 
 =item *
 
+C<memory/minmem> (R) - minimum memory, below which the program won't try
+to balloon out
+
+=item *
+
 C<memory/mode> (R) - memory allocation mode;
 available values: 1 (normal), 2 (freeze), 3 (emergency)
 
