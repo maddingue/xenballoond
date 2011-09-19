@@ -184,6 +184,7 @@ a minimum target, in MB. If this value is 0 (default), an heuristic
 based on the maximum amount of memory will be used. (The heuristic
 provides the same minimum as recent versions of the balloon driver but
 early versions of the balloon driver did not enforce a minimum.)
+May be overridden by C<{memory/minmem}>.
 
 =item *
 

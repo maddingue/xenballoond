@@ -1,5 +1,6 @@
 Release history for xenballoond
 
+ - [FEATURE] Allow to override minmem from XenBus path {memory/minmem}.
  - [OPTIM] Removed all calls to xenstore-exists(8) to avoid a few useless
    forks and improve performances (maddingue).
 

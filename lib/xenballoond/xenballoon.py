@@ -50,6 +50,14 @@ class Xenballoon:
     # @return integer
     #
     def minmb(self):
+        if self.xenstore_enabled:
+            cmd  = [self.xs_read, "memory/minmem"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0:
+                return int(out)
+
         minmem = self.config.getint("xenballoond", "minmem")
 
         if minmem != 0:
