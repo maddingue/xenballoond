@@ -276,7 +276,8 @@ class Xenballoon:
             sys.exit(1)
 
         if not os.path.exists(self.proc_meminfo):
-            sys.stderr.write(meta.name+": fatal: Can't read "+self.proc_meminfo+"\n")
+            sys.stderr.write(meta.name+": fatal: File " + self.proc_meminfo + \
+                "does not exist\n")
             sys.exit(1)
 
         if os.path.exists(self.xs_read) and os.path.exists(self.xs_write):
