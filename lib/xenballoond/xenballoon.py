@@ -185,11 +185,15 @@ class Xenballoon:
         if tgtbytes > maxbytes:
             tgtbytes = maxbytes
 
+        # if not in emergency mode, calculate the new memory size
         if self.mode != EMERGENCY_MODE:
+            # balloon down to the requested size
             if curbytes > tgtbytes:
                 downhys = self.downhysteresis()
                 if downhys != 0:
                     tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
+
+            # balloon up to the requested size
             elif curbytes < tgtbytes:
                 uphys = self.uphysteresis()
                 if uphys != 0:
