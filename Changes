@@ -1,5 +1,7 @@
 Release history for xenballoond
 
+ - [FEATURE] Add support for the 'soft_max_mem' config parameter and XenBus
+   path {memory/minmem} to control the maximum allowed size.
  - [FEATURE] Allow to override minmem from XenBus path {memory/minmem}.
  - [OPTIM] Removed all calls to xenstore-exists(8) to avoid a few useless
    forks and improve performances (maddingue).

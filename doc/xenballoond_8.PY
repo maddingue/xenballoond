@@ -108,6 +108,10 @@ C<memory/selftarget> (W)
 
 =item *
 
+C<memory/softmaxmem> (R) - maximum allowed size, in megabytes
+
+=item *
+
 C<memory/target> (R)
 
 =item *
@@ -217,6 +221,12 @@ Location where memory high-water mark is stored; if a guest supports
 hot-add memory, C<maxmem> might increase across time and the minimum
 target heuristic is based on max memory. Note: reboot after changing
 this variable, else overballooning may occur.
+
+=item *
+
+C<soft_max_mem> I<(integer)> -
+Maximum allowed size in megabytes.
+May be overridden by C<{memory/softmaxmem}>.
 
 =item *
 

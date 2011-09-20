@@ -134,6 +134,23 @@ class Xenballoon:
 
 
     #
+    # softmaxmem()
+    # ------------
+    # @return integer soft maximum threshold, in megabytes
+    #
+    def softmaxmem(self):
+        if self.xenstore_enabled:
+            cmd  = [self.xs_read, "memory/softmaxmem"]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+
+            if proc.returncode == 0:
+                return int(out)
+
+        return self.config.getint("xenballoond", "soft_max_mem")
+
+
+    #
     # selfballoon()
     # -----------
     def selfballoon(self):
@@ -158,6 +175,13 @@ class Xenballoon:
             tgtbytes = target * 1024
 
         curbytes = self.selftarget("getcurkb") * 1024
+
+        # soft maximum memory size, in bytes
+        maxbytes = self.softmaxmem() * 1024 * 1024
+
+        # do not balloon over the maximum allowed size
+        if tgtbytes > maxbytes:
+            tgtbytes = maxbytes
 
         if self.mode != EMERGENCY_MODE:
             if curbytes > tgtbytes:
