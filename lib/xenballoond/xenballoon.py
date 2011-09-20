@@ -169,11 +169,13 @@ class Xenballoon:
     # balloon_to_target()
     # -----------------
     def balloon_to_target(self, target=None):
+        # get the target in bytes
         if not target:
             tgtbytes = self.selftarget()
         else:
             tgtbytes = target * 1024
 
+        # current memory size, in bytes
         curbytes = self.selftarget("getcurkb") * 1024
 
         # soft maximum memory size, in bytes
@@ -192,8 +194,10 @@ class Xenballoon:
                 uphys = self.uphysteresis()
                 tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
 
+        # write the request memory size to /proc
         open(self.proc_xen_balloon, "w").write(str(tgtbytes))
 
+        # post the request memory size to XenBus, if enabled
         if self.xenstore_enabled:
             valstr = str(tgtbytes/1024)
             subprocess.call([self.xs_write, "memory/selftarget", valstr])
