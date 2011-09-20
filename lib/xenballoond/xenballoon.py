@@ -192,7 +192,8 @@ class Xenballoon:
                     tgtbytes = curbytes - (curbytes - tgtbytes) / downhys
             elif curbytes < tgtbytes:
                 uphys = self.uphysteresis()
-                tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
+                if uphys != 0:
+                    tgtbytes = curbytes + (tgtbytes - curbytes) / uphys
 
         # write the request memory size to /proc
         open(self.proc_xen_balloon, "w").write(str(tgtbytes))
