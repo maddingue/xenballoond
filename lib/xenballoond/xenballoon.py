@@ -40,6 +40,7 @@ class Xenballoon:
     # --------
     ## Initialisation
     # @param config     a ConfigParser instance
+    #
     def __init__(self, config):
         self.config  = config
 
@@ -47,7 +48,7 @@ class Xenballoon:
     #
     # minmb()
     # -----
-    # @return integer
+    # @return integer   minimum memory size, in megabytes
     #
     def minmb(self):
         if self.xenstore_enabled:
@@ -153,6 +154,9 @@ class Xenballoon:
     #
     # selfballoon()
     # -----------
+    ## Indicates whether self-ballooning is enabled or not.
+    # @return boolean   true when self-ballooning is enabled
+    #
     def selfballoon(self):
         if self.xenstore_enabled:
             cmd  = [self.xs_read, "memory/selfballoon"]
@@ -211,6 +215,8 @@ class Xenballoon:
     #
     # fetch_memory_stats()
     # ------------------
+    ## Fetch and parse the memory stats from /proc/meminfo
+    #
     def fetch_memory_stats(self):
         input = open(self.proc_meminfo, "r")
 
@@ -231,6 +237,8 @@ class Xenballoon:
     #
     # send_memory_stats()
     # -----------------
+    ## Post the memory stats to XenBus, when configured to do so.
+    #
     def send_memory_stats(self):
         if not self.xenstore_enabled:
             return
@@ -250,6 +258,8 @@ class Xenballoon:
     #
     # send_cpu_stats()
     # --------------
+    ## Post the CPU stats to XenBus, when configured to do so.
+    #
     def send_cpu_stats(self):
         if self.config.getboolean("xenballoond", "send_cpustat"):
             param_lst = [ 'loadavg', 'loadavg5', 'loadavg10', 'run_proc',
