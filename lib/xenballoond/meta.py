@@ -2,7 +2,7 @@
 """ program meta-information """
 
 name    = "xenballoond"
-version = "1.0.0"
+version = "1.1.0"
 license = "GPL"
 authors = "Nicolas Agius, Sebastien Aperghis-Tramoni, David Passante"
 url     = "https://github.com/maddingue/xenballoond"
