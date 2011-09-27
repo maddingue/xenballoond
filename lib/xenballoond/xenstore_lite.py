@@ -5,12 +5,12 @@ from ctypes import *
 from ctypes.util import find_library
 
 
-# types
+# XenStore types
 xs_transaction_t = c_uint32
 struct_xs_handle = c_void_p
 
 
-# load the xenstore library
+# load the XenStore library
 xenstore = CDLL(find_library("xenstore"))
 
 
